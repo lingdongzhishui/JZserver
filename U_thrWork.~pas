@@ -335,42 +335,46 @@ begin
   s := gParam.ExePath+'tlqServer.ini';
   f := TIniFile.Create(s);
   FMessageID :='0';
-  case gParam.DBType of
-   3:
-  begin
-    s := 'Provider=SQLOLEDB.1;Password=%s;Persist Security Info=True;User ID=%s;' +
-          'Initial Catalog=%s;Data Source=%s';
-    FOpDBWait.ConnectionStr := Format(s,[gParam.DBPassword,gParam.DBUser,
-          f.ReadString('DataBase', '基础库', ''),gParam.DBIP]);
+    try
+      case gParam.DBType of
+       3:
+      begin
+        s := 'Provider=SQLOLEDB.1;Password=%s;Persist Security Info=True;User ID=%s;' +
+              'Initial Catalog=%s;Data Source=%s';
+        FOpDBWait.ConnectionStr := Format(s,[gParam.DBPassword,gParam.DBUser,
+              f.ReadString('DataBase', '基础库', ''),gParam.DBIP]);
 
-    FOpDBETC.ConnectionStr:=Format(s,[gParam.ETCDBPassword,gParam.ETCDBUser,
-          gParam.ETCDBNAME,gParam.ETCDBIP]);
+        FOpDBETC.ConnectionStr:=Format(s,[gParam.ETCDBPassword,gParam.ETCDBUser,
+              gParam.ETCDBNAME,gParam.ETCDBIP]);
 
-  end;
-  end;
-  FreeAndNil(f);
-//  f.Free;
-  if FOpDBWait.ConnectionStr <> '' then
-      FOpDBWait.Connected := True
-    else
-      WriteLog('传输数据库未配置');
-  if FOpDBETC.ConnectionStr <> '' then
-      FOpDBETC.Connected := True
-    else
-      WriteLog('ETC数据库未配置');
+      end;
+      end;
+      FreeAndNil(f);
+    //  f.Free;
+        if FOpDBWait.ConnectionStr <> '' then
+          FOpDBWait.Connected := True
+        else
+          WriteLog('传输数据库未配置');
+      if FOpDBETC.ConnectionStr <> '' then
+          FOpDBETC.Connected := True
+        else
+          WriteLog('ETC数据库未配置');
 
-  dbconnect:=FOpDBWait.Connected;
-  etcconnect:=FOpDBETC.Connected;
-  if dbconnect and etcconnect then
-  begin
-    result:=True;
-  end
-  else
-  begin
-    WriteLog('传输库'+FOpDBWait.ErrStr);
-    WriteLog('ETC数据库'+FOpDBETC.ErrStr);
-    result:=False;
-  end;
+      dbconnect:=FOpDBWait.Connected;
+      etcconnect:=FOpDBETC.Connected;
+      if dbconnect and etcconnect then
+      begin
+        result:=True;
+      end
+      else
+      begin
+        WriteLog('传输库'+FOpDBWait.ErrStr);
+        WriteLog('ETC数据库'+FOpDBETC.ErrStr);
+        result:=False;
+      end;
+    except
+      WriteLog('数据库连接异常'+FOpDBWait.ErrStr);
+    end
 end;
 
 

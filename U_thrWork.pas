@@ -431,7 +431,7 @@ begin
       else
       begin
         WriteLog(FOpDBETC.ErrStr);
-        Exit;
+//        Exit;
       end;
     end;
    {end
