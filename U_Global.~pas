@@ -1,0 +1,31 @@
+unit U_Global;
+
+interface
+
+uses
+  Classes, U_thrWork, Param;//,UCenterSend;
+
+var
+  thrSend: TSendData;
+  thrReceiveList:TReceiveData;
+  gParam: TWorkParam;
+  gNodes: TStringList;
+
+  procedure SaveUTF8File(AContent:string;AFileName: string);
+implementation
+
+ procedure SaveUTF8File(AContent:string;AFileName: string);
+  var
+   ffileStream:TFileStream;
+   futf8Bytes: string;
+   S: string;
+  begin
+   ffileStream:=TFileStream.Create(AFileName,fmCreate);
+   futf8Bytes:= UTF8Encode(AContent);
+   S:=#$EF#$BB#$BF;
+   ffileStream.Write(S[1],Length(S));
+   ffileStream.Write(futf8Bytes[1],Length(futf8Bytes));
+   ffileStream.Free;
+  end;
+
+end.

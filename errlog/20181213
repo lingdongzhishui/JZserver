@@ -1,0 +1,1 @@
+15:58:42_364   数据拓展校验失败:为过程或函数 proc_checkjzjg_nolj 指定了过多的参数。 sql:exec proc_checkjzjg_nolj'select * from  EATS_PTU_Transaction_DOWN where  Messageid=1 AND  tollProvinceId=110101 and IssuerId=140201 and ChargeState=0 110101','140201','1','1405302810058720181201154926','EATS_PTU','1','-1','','110101','140201','1','1405302810058720181201154926','EATS_PTU','','',''

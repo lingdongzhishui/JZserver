@@ -1,0 +1,91 @@
+ALTER                        proc [dbo].[proc_checkjzjg_nolj](@ServiceProviderId varchar(30),
+@IssuerId varchar(30),
+@MessageId integer,
+@TransId integer,
+@strtable varchar(10),
+@jzresult integer output,
+@errorno integer output,
+@errormsg varchar(512) output)
+AS
+BEGIN
+    SET @jzresult=0
+    set @errorno=-1
+    set @errormsg=' '
+    declare @strcardno varchar(20)
+    declare @outstation varchar(10)
+    declare @instation varchar(10)
+    declare @optime varchar(20)
+    declare @inoptime varchar(20)
+    declare @checkcount INT
+    DECLARE @icardtype INTEGER
+    DECLARE @strvehplate VARCHAR(20)
+    DECLARE @listvehplate VARCHAR(20)
+    DECLARE @listcardtype INTEGER
+    declare @tac varchar(20)
+    declare @terminalno varchar(20)
+    declare @terminaltransno varchar(20)
+
+
+begin
+    select @strcardno=rtrim(CardNetNo)+ltrim(cardid),@optime=optime,@outstation=outstation,@instation=instationno,
+    @inoptime=inoptime,@listvehplate=license,@listcardtype=cardtype,@terminaltransno=terminaltransno,@terminalno=terminalno,@tac=tac
+    from T_TransactionOriginal_other 
+    where ServiceProviderId=@ServiceProviderId and IssuerId=@IssuerId and messageid=@MessageId and intTransId=@TransId
+
+    IF @@ROWCOUNT=0 
+    BEGIN
+        SET @jzresult=power(2,20)
+        set @errormsg=@errormsg+'/没有找到要校验的数据' 
+        RETURN
+    END
+    
+--判断黑名单    
+    if exists(select * from PCardBlacklist_area where cardno=@strcardno and starttime<=@optime and endtime>=@optime)
+    begin
+        set @jzresult=power(2,3-1)
+        set @errormsg=@errormsg+'/所校验的卡号+交易时间正好落到卡黑名单当中SQL: srv1612.db_center.dbo.PCardBlacklist where cardno='+@strcardno+' and starttime<='+@optime+' and endtime>='+@optime
+    end
+
+/*    
+    select @checkcount=count(*) from T_TransactionOriginal_other where CardNetNo=substring(@strcardno,1,4) and cardid=substring(@strcardno,5,16) and optime=@optime and outstation=@outstation
+    if @checkcount>1 
+    begin 
+       set @jzresult=@jzresult+2
+        set @errormsg=@errormsg+'/所校验的卡号+交易时间正好落到卡黑名单当中SQL: srv1612.db_center.dbo.PCardBlacklist where cardno='+@strcardno+' and starttime<='''+@optime+''' and endtime>='''+@optime+''''
+        
+    end;
+*/
+    select @checkcount=count(*) from T_TransactionOriginal_other where CardNetNo=substring(@strcardno,1,4) and cardid=substring(@strcardno,5,16) 
+and optime=@optime     and @terminalno=terminalno
+    and @terminaltransno=@terminaltransno 
+    and @tac =tac and outstation=@outstation
+     if @checkcount>1 
+     begin
+         set @jzresult=@jzresult ^ power(2,2-1)
+         set @errormsg=@errormsg+'/根据以下条件证明流水是重复交易：SQL：select count(*) T_TransactionOriginal_other where cardnetno='
+         +substring(@strcardno,1,4)+' and cardid='+substring(@strcardno,5,16)+' and ioptime='+@inoptime
+         +' and instationno='+@instation+' and outstation='+@outstation
+     END;
+    if datediff(d,@optime,getdate())>30
+   begin
+         set @jzresult=@jzresult ^ power(2,5-1)
+         set @errormsg='根据出口时间'+cast(@optime as varchar(20))+'记账时间为'+cast(getdate() as varchar(20))+'判断超出当前前属俞起超过设定值30天'
+       
+   end
+
+--判断卡有效性
+ end
+end;
+--select power(2,0)
+
+
+
+
+
+
+GO
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+

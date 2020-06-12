@@ -1,0 +1,130 @@
+unit utf;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, DBCtrls, DB,adodb, ComCtrls;
+
+type
+  Tfrmtf = class(TForm)
+    dbtxt_cph: TDBText;
+    Label1: TLabel;
+    Label2: TLabel;
+    dbtxt_kh: TDBText;
+    Label3: TLabel;
+    dbtxt_optime: TDBText;
+    Label4: TLabel;
+    dbtxt_jyms: TDBText;
+    Label5: TLabel;
+    edt_tfje: TEdit;
+    Button1: TButton;
+    Button2: TButton;
+    Label6: TLabel;
+    ds1: TDataSource;
+    Label7: TLabel;
+    dbtxt_jyje: TDBText;
+    Label8: TLabel;
+    lab_sjsf: TLabel;
+    dtp_cleardate: TDateTimePicker;
+    Label9: TLabel;
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure edt_tfjeKeyPress(Sender: TObject; var Key: Char);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+    strtable:string;
+  end;
+
+var
+  frmtf: Tfrmtf;
+
+implementation
+
+{$R *.dfm}
+uses
+     Unit1,func_ty,uwork;
+
+procedure Tfrmtf.Button1Click(Sender: TObject);
+var
+    errorid:integer;
+    errormsg:string;
+    strtmp:string;
+    imoney:integer;
+    jzresult:integer;
+    i:integer;
+    strtablename:string;
+begin
+
+//    mainclass.opendataset(ADOQuery1,'select * from dbo.T_TransactionOriginal_'+strtablename+' a left join T_TransactionOriginalmain_'+strtablename+' b on a.messageid=b.messageid  where (b.ChargeState is null or b.ChargeState=0)');
+        with frmmain.adosp do
+        begin
+            close;
+            errorid:=-1;
+            ProcedureName:='proc_tfcl';
+            Parameters.Clear;
+            Parameters.CreateParameter('@ServiceProviderId',ftString,pdInput,20,ds1.DataSet.fieldbyname('ServiceProviderId').AsString);
+            Parameters.CreateParameter('@IssuerId',ftstring,pdInput,20,ds1.DataSet.fieldbyname('IssuerId').AsString);
+            Parameters.CreateParameter('@MessageId',ftString,pdInput,20,ds1.DataSet.fieldbyname('MessageId').AsString);
+            Parameters.CreateParameter('@TransId',ftstring,pdInput,10,ds1.DataSet.fieldbyname('intTransId').AsString);
+            Parameters.CreateParameter('@tfje',ftinteger,pdInput,7,StrTocurr(yxsj(edt_tfje.text))*100*-1);
+            Parameters.CreateParameter('@strtable',ftstring,pdInput,10,strtablename);
+            Parameters.CreateParameter('@squaddate',ftinteger,pdInput,10,FormatDateTime('yyyymmdd',self.dtp_cleardate.Date));
+
+            Parameters.CreateParameter('@errorno',ftstring,pdoutput,10,errorid);
+            Parameters.CreateParameter('@errormsg',ftstring,pdInputOutput,512,errormsg);
+            try
+
+                    ExecProc;
+//                    i:=parameters.ParamByName('@Result').Value;
+//                    jzresult:=jzresult or i;
+//                    errormsg:=parameters.ParamByName('@errormsg').Value;
+
+                except on e:exception do
+                begin
+                    for i:=0 to Parameters.count-1 do
+                    begin
+                        strtmp:=strtmp+string(Parameters[i].Value)+''',''';
+                    end;
+
+                    mainclass.writeerrorlog('数据校验失败:'+e.message+' sql:exec '+ProcedureName+''''+copy(strtmp,1,Length(strtmp)-2));
+                end;
+            end;
+        end;
+        ModalResult:=mrOk;
+
+
+end;
+
+
+procedure Tfrmtf.Button2Click(Sender: TObject);
+begin
+    ModalResult:=mrCancel;
+end;
+
+procedure Tfrmtf.FormShow(Sender: TObject);
+begin
+    self.dbtxt_cph.DataField:='License';
+    self.dbtxt_kh.DataField:='cardid';
+    self.dbtxt_optime.DataField:='optime';
+    self.dbtxt_jyje.DataField:='fee1';
+    self.dbtxt_jyms.DataField:='Description';
+    self.edt_tfje.Text:=dbtxt_jyje.Field.Value;
+    self.dtp_cleardate.Date:=now;
+
+end;
+
+procedure Tfrmtf.edt_tfjeKeyPress(Sender: TObject; var Key: Char);
+begin
+    if key=#161 then key:='.';
+    if (IsDigit(Tedit(sender).Text+Key)=false) and (key<>#8) then
+    begin
+        key:=#0;
+    end;
+    self.lab_sjsf.Caption:=dbtxt_jyje.Field.Value-yxsj(self.edt_tfje.Text+iif(key=#8,Copy(edt_tfje.Text,1,Length(edt_tfje.Text)-1),key));
+end;
+
+end.
